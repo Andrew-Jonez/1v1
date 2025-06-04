@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Basketball 21</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <h1>Basketball 21</h1>
+    <p>Your Score: <span id="my-score">0</span></p>
+    <p>Opponent Score: <span id="opponent-score">0</span></p>
+
+    <div class="button-container">
+        <button class="game-button" onclick="sendAction('shoot')">Shoot</button>
+        <button class="game-button" onclick="sendAction('pass')">Pass</button>
+        <button class="game-button" onclick="sendAction('shoot', true)">Steal</button>
+    </div>
+
+    <div id="message-box"></div>
+
+    <script>
+        async function sendAction(action, steal = false) {
+            const buttons = document.querySelectorAll('.game-button');
+            buttons.forEach(btn => btn.disabled = true);
+
+            const res = await fetch('/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, steal })
+            });
+
+            const data = await res.json();
+            const msgBox = document.getElementById('message-box');
+            msgBox.innerHTML = "";
+
+            for (let i = 0; i < data.messages.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                msgBox.innerHTML += `<p>${data.messages[i]}</p>`;
+            }
+
+            document.getElementById('my-score').textContent = data.my_score;
+            document.getElementById('opponent-score').textContent = data.opponent_score;
+
+            if (!data.game_over) {
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+    </script>
+</body>
+</html>

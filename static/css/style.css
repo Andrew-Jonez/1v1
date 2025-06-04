@@ -1,0 +1,42 @@
+body {
+    background-color: #fefefe;
+    font-family: 'Press Start 2P', cursive;
+    padding: 40px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+p {
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+.button-container {
+    margin-top: 20px;
+}
+
+.game-button {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    padding: 10px 15px;
+    margin: 5px;
+    background-color: #ffcc00;
+    border: 2px solid #000;
+    box-shadow: 4px 4px #000;
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
+}
+
+.game-button:active {
+    box-shadow: 1px 1px #000;
+    transform: translate(3px, 3px);
+}
+
+#message-box {
+    margin-top: 30px;
+    font-size: 12px;
+}
