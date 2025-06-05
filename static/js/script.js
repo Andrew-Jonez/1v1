@@ -1,4 +1,18 @@
 document.addEventListener('DOMContentLoaded', function () {
+    const overlay = document.getElementById('welcomeOverlay');
+    const closeOverlayBtn = document.getElementById('closeOverlayBtn');
+
+
+    // Show overlay when the page loads
+    overlay.style.display = "flex";
+
+    // Hide overlay when "Start Game" is clicked
+    closeOverlayBtn.addEventListener('click', function () {
+        console.log("Start Game button clicked!");
+        overlay.style.display = "none";
+        closeOverlayBtn.disabled = true;
+    });
+
     const shootBtn = document.getElementById('shoot-btn');
     const passBtn = document.getElementById('pass-btn');
     const stealBtn = document.getElementById('steal-btn');
@@ -16,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const p = document.createElement('p');
             p.textContent = msg;
             messageDiv.appendChild(p);
-            await delay(1000); // ← Change this value to modify delay (e.g. 3000 for 3 seconds)
+            await delay(1000);
         }
     }
 
@@ -29,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function enableButtons() {
         shootBtn.disabled = false;
         passBtn.disabled = false;
-        stealBtn.disabled = true; // Start disabled until prompted
+        stealBtn.disabled = true; // Still starts disabled
     }
 
     async function sendAction(action, steal = false) {
@@ -48,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (data.messages.some(msg => msg.includes("press Steal"))) {
             stealBtn.disabled = false;
+            stealBtn.style.display = 'inline-block'; // Optional if hidden
         } else if (!data.game_over) {
             enableButtons();
         }
@@ -60,6 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
     shootBtn.addEventListener('click', () => sendAction('shoot'));
     passBtn.addEventListener('click', () => sendAction('pass'));
     stealBtn.addEventListener('click', () => {
-    stealBtn.style.display = 'none';
-    sendAction('steal_attempt');
+        stealBtn.style.display = 'none';
+        sendAction('steal_attempt');
+    });
 });

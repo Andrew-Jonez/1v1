@@ -9,6 +9,21 @@
     
 </head>
 <body>
+    <div id="welcomeOverlay" class="overlay">
+    <div class="overlay-content">
+        <h2>Welcome to 1v1</h2> 
+        </p> a Basketball Game of 21!</p>
+        <p>Game Rules:</p>
+        <ul>
+            <li>Click **Shoot** to attempt a basket.</li>
+            <li>Click **Pass** to keep possession.</li>
+            <li>Use **Steal** strategically when prompted.</li>
+            <li>First to **21 points** wins!</li>
+        </ul>
+        <button id="closeOverlayBtn">Start Game</button>
+
+    </div>
+</div>
      
     <div class="game-container">
         <h1>1v1</h1>
@@ -23,7 +38,21 @@
             <button class="action-button" id="stealBtn" style="display: none;">Steal</button>
         </div>
     </div>
-    <script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const overlay = document.getElementById('welcomeOverlay');
+        const closeOverlayBtn = document.getElementById('closeOverlayBtn');
+
+        // Show the overlay when the page loads
+        overlay.style.display = 'flex';
+
+        // Hide the overlay when Start Game is clicked
+        closeOverlayBtn.addEventListener('click', function () {
+            console.log("Start Game button clicked");
+            overlay.style.display = 'none';
+        });
+
+        // --- Existing Game Logic Below ---
         const shootBtn = document.getElementById('shootBtn');
         const passBtn = document.getElementById('passBtn');
         const stealBtn = document.getElementById('stealBtn');
@@ -78,6 +107,8 @@
             stealBtn.style.display = 'none';
             sendAction('shoot', true);
         });
-    </script>
+    });
+</script>
+
 </body>
 </html>
