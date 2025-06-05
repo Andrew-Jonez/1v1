@@ -4,27 +4,53 @@
     <meta charset="UTF-8">
     <title>Basketball 21</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesheet.css') }}">
+    <style>
+        /* Optional override here if you can't edit stylesheet.css */
+        #messageBox {
+            max-height: 4.5em; /* Approx 3 lines of text */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            transition: all 0.3s ease;
+        }
 
+        #messageBox p {
+            margin: 0;
+            padding: 2px 0;
+            animation: fadeSlideIn 0.3s ease;
+        }
 
-    
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Overlay -->
     <div id="welcomeOverlay" class="overlay">
-    <div class="overlay-content">
-        <h2>Welcome to 1v1</h2> 
-        </p> a Basketball Game of 21!</p>
-        <p>Game Rules:</p>
-        <ul>
-            <li>Click **Shoot** to attempt a basket.</li>
-            <li>Click **Pass** to keep possession.</li>
-            <li>Use **Steal** strategically when prompted.</li>
-            <li>First to **21 points** wins!</li>
-        </ul>
-        <button id="closeOverlayBtn">Start Game</button>
-
+        <div class="overlay-content">
+            <h2>Welcome to 1v1</h2> 
+            <p>A Basketball Game of 21!</p>
+            <p>Game Rules:</p>
+            <ul>
+                <li>Click <strong>Shoot</strong> to attempt a basket.</li>
+                <li>Click <strong>Pass</strong> to keep possession.</li>
+                <li>Use <strong>Steal</strong> strategically when prompted.</li>
+                <li>First to <strong>21 points</strong> wins!</li>
+            </ul>
+            <button id="closeOverlayBtn">Start Game</button>
+        </div>
     </div>
-</div>
-     
+
+    <!-- Main Game UI -->
     <div class="game-container">
         <h1>1v1</h1>
         <div class="scoreboard">
@@ -38,77 +64,84 @@
             <button class="action-button" id="stealBtn" style="display: none;">Steal</button>
         </div>
     </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const overlay = document.getElementById('welcomeOverlay');
-        const closeOverlayBtn = document.getElementById('closeOverlayBtn');
 
-        // Show the overlay when the page loads
-        overlay.style.display = 'flex';
+    <!-- Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Overlay logic
+            const overlay = document.getElementById('welcomeOverlay');
+            const closeOverlayBtn = document.getElementById('closeOverlayBtn');
 
-        // Hide the overlay when Start Game is clicked
-        closeOverlayBtn.addEventListener('click', function () {
-            console.log("Start Game button clicked");
-            overlay.style.display = 'none';
-        });
-
-        // --- Existing Game Logic Below ---
-        const shootBtn = document.getElementById('shootBtn');
-        const passBtn = document.getElementById('passBtn');
-        const stealBtn = document.getElementById('stealBtn');
-        const messageBox = document.getElementById('messageBox');
-        const myScoreSpan = document.getElementById('myScore');
-        const opponentScoreSpan = document.getElementById('opponentScore');
-
-        let awaitingSteal = false;
-
-        function disableButtons(disable = true) {
-            shootBtn.disabled = disable;
-            passBtn.disabled = disable;
-            stealBtn.disabled = disable;
-        }
-
-        function displayMessages(messages, callback) {
-            if (messages.length === 0) {
-                if (callback) callback();
-                return;
-            }
-            const message = messages.shift();
-            messageBox.innerHTML += `<p>${message}</p>`;
-            if (message.includes("Press 'Steal'")) {
-                stealBtn.style.display = 'inline-block';
-                stealBtn.disabled = false;
-                return;
-            }
-            setTimeout(() => displayMessages(messages, callback), 1000);
-        }
-
-        function sendAction(action, steal = false) {
-            disableButtons();
-            fetch('/action', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({action: action, steal: steal})
-            })
-            .then(response => response.json())
-            .then(data => {
-                displayMessages([...data.messages], () => {
-                    if (!data.game_over) disableButtons(false);
-                });
-                myScoreSpan.textContent = data.my_score;
-                opponentScoreSpan.textContent = data.opponent_score;
-                if (data.game_over) disableButtons();
+            overlay.style.display = 'flex';
+            closeOverlayBtn.addEventListener('click', function () {
+                overlay.style.display = 'none';
             });
-        }
 
-        shootBtn.addEventListener('click', () => sendAction('shoot'));
-        passBtn.addEventListener('click', () => sendAction('pass'));
-        stealBtn.addEventListener('click', () => {
-            stealBtn.style.display = 'none';
-            sendAction('shoot', true);
+            // Game logic
+            const shootBtn = document.getElementById('shootBtn');
+            const passBtn = document.getElementById('passBtn');
+            const stealBtn = document.getElementById('stealBtn');
+            const messageBox = document.getElementById('messageBox');
+            const myScoreSpan = document.getElementById('myScore');
+            const opponentScoreSpan = document.getElementById('opponentScore');
+
+            function disableButtons(disable = true) {
+                shootBtn.disabled = disable;
+                passBtn.disabled = disable;
+                stealBtn.disabled = disable;
+            }
+
+            function displayMessages(messages, callback) {
+                if (messages.length === 0) {
+                    if (callback) callback();
+                    return;
+                }
+
+                const message = messages.shift();
+
+                const p = document.createElement('p');
+                p.textContent = message;
+                messageBox.appendChild(p);
+
+                // Only show the last 3 messages
+                while (messageBox.children.length > 3) {
+                    messageBox.removeChild(messageBox.firstChild);
+                }
+
+                if (message.includes("Press 'Steal'")) {
+                    stealBtn.style.display = 'inline-block';
+                    stealBtn.disabled = false;
+                    return;
+                }
+
+                setTimeout(() => displayMessages(messages, callback), 1000);
+            }
+
+            function sendAction(action, steal = false) {
+                disableButtons();
+                fetch('/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action, steal: steal })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    displayMessages([...data.messages], () => {
+                        if (!data.game_over) disableButtons(false);
+                    });
+                    myScoreSpan.textContent = data.my_score;
+                    opponentScoreSpan.textContent = data.opponent_score;
+                    if (data.game_over) disableButtons();
+                });
+            }
+
+            shootBtn.addEventListener('click', () => sendAction('shoot'));
+            passBtn.addEventListener('click', () => sendAction('pass'));
+            stealBtn.addEventListener('click', () => {
+                stealBtn.style.display = 'none';
+                sendAction('shoot', true);
+            });
         });
-    });
-</script>
-
+    </script>
 </body>
 </html>
