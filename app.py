@@ -23,7 +23,7 @@ def steal_ball():
 def index():
     session['my_score'] = 0
     session['opponent_score'] = 0
-    session['turn'] = "player"
+    session['turn'] = "player_turn"
     return render_template('index.html')
 
 @app.route('/action', methods=['POST'])
@@ -33,7 +33,9 @@ def action():
 
     my_score = session.get('my_score', 0)
     opponent_score = session.get('opponent_score', 0)
+    turn = session.get('turn', 'player_turn')
     messages = []
+    prompt_steal = False
 
     if my_score >= MAX_SCORE or opponent_score >= MAX_SCORE:
         messages.append("Game is over.")
@@ -44,54 +46,67 @@ def action():
             'game_over': True
         })
 
-    if action_type == 'shoot':
-        if score2points():
-            my_score += 2
-            messages.append("You scored 2 points!")
+    if turn == 'awaiting_steal' and steal_attempt:
+        if steal_ball():
+            messages.append("You stole the ball!")
+            session['turn'] = 'player_turn'
         else:
-            messages.append("You missed the shot.")
-            rebound_result = rebound()
-            messages.append(rebound_result)
-            if rebound_result == "Your Opponent rebounded the ball!":
-                offense_result = opponent_offense()
-                messages.append(offense_result)
-                if offense_result == "Your opponent passed the ball!":
-                    if steal_attempt:
-                        if steal_ball():
-                            messages.append("You stole the ball!")
-                        else:
-                            messages.append("Steal failed.")
-                    else:
-                        messages.append("You let them pass.")
-                else:
-                    if score2points():
-                        opponent_score += 2
-                        messages.append("Your opponent scored 2 points!")
-                    else:
-                        messages.append("Your opponent missed.")
-                        rebound_result = rebound()
+            messages.append("Steal failed.")
+            session['turn'] = 'opponent_turn'
+        return jsonify({
+            'messages': messages,
+            'my_score': my_score,
+            'opponent_score': opponent_score,
+            'game_over': False
+        })
 
-    elif action_type == 'pass':
-        messages.append("You passed the ball.")
+    if turn == 'player_turn':
+        if action_type == 'shoot':
+            if score2points():
+                my_score += 2
+                messages.append("You scored 2 points!")
+                session['turn'] = 'player_turn'
+            else:
+                messages.append("You missed the shot.")
+                rebound_result = rebound()
+                messages.append(rebound_result)
+                if rebound_result == "Your Opponent rebounded the ball!":
+                    session['turn'] = 'opponent_turn'
+                else:
+                    session['turn'] = 'player_turn'
+
+        elif action_type == 'pass':
+            messages.append("You passed the ball.")
+            session['turn'] = 'player_turn'
+
+    elif turn == 'opponent_turn':
         offense_result = opponent_offense()
         messages.append(offense_result)
+
         if offense_result == "Your opponent passed the ball!":
-            if steal_attempt:
-                if steal_ball():
-                    messages.append("You stole the ball!")
-                else:
-                    messages.append("Steal failed.")
-            else:
-                messages.append("You let them pass.")
+            messages.append("Press 'Steal' to try to take the ball.")
+            session['turn'] = 'awaiting_steal'
+            prompt_steal = True
+            return jsonify({
+                'messages': messages,
+                'my_score': my_score,
+                'opponent_score': opponent_score,
+                'prompt_steal': prompt_steal,
+                'game_over': False
+            })
         else:
             if score2points():
                 opponent_score += 2
                 messages.append("Your opponent scored 2 points!")
+                session['turn'] = 'opponent_turn'
             else:
                 messages.append("Your opponent missed.")
-
-    elif action_type == 'steal':
-        messages.append("Steal can only be used as a reaction, not standalone.")
+                rebound_result = rebound()
+                messages.append(rebound_result)
+                if rebound_result == "Your Opponent rebounded the ball!":
+                    session['turn'] = 'opponent_turn'
+                else:
+                    session['turn'] = 'player_turn'
 
     session['my_score'] = my_score
     session['opponent_score'] = opponent_score

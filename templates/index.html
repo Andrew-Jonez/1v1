@@ -3,49 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <title>Basketball 21</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesheet.css') }}">
+
+
+    
 </head>
 <body>
-    <h1>Basketball 21</h1>
-    <p>Your Score: <span id="my-score">0</span></p>
-    <p>Opponent Score: <span id="opponent-score">0</span></p>
-
-    <div class="button-container">
-        <button class="game-button" onclick="sendAction('shoot')">Shoot</button>
-        <button class="game-button" onclick="sendAction('pass')">Pass</button>
-        <button class="game-button" onclick="sendAction('shoot', true)">Steal</button>
+     
+    <div class="game-container">
+        <h1>1v1</h1>
+        <div class="scoreboard">
+            <p>Home: <span id="myScore">0</span></p>
+            <p>Away: <span id="opponentScore">0</span></p>
+        </div>
+        <div class="message-box" id="messageBox"></div>
+        <div class="buttons">
+            <button class="action-button" id="shootBtn">Shoot</button>
+            <button class="action-button" id="passBtn">Pass</button>
+            <button class="action-button" id="stealBtn" style="display: none;">Steal</button>
+        </div>
     </div>
-
-    <div id="message-box"></div>
-
     <script>
-        async function sendAction(action, steal = false) {
-            const buttons = document.querySelectorAll('.game-button');
-            buttons.forEach(btn => btn.disabled = true);
+        const shootBtn = document.getElementById('shootBtn');
+        const passBtn = document.getElementById('passBtn');
+        const stealBtn = document.getElementById('stealBtn');
+        const messageBox = document.getElementById('messageBox');
+        const myScoreSpan = document.getElementById('myScore');
+        const opponentScoreSpan = document.getElementById('opponentScore');
 
-            const res = await fetch('/action', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action, steal })
-            });
+        let awaitingSteal = false;
 
-            const data = await res.json();
-            const msgBox = document.getElementById('message-box');
-            msgBox.innerHTML = "";
-
-            for (let i = 0; i < data.messages.length; i++) {
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                msgBox.innerHTML += `<p>${data.messages[i]}</p>`;
-            }
-
-            document.getElementById('my-score').textContent = data.my_score;
-            document.getElementById('opponent-score').textContent = data.opponent_score;
-
-            if (!data.game_over) {
-                buttons.forEach(btn => btn.disabled = false);
-            }
+        function disableButtons(disable = true) {
+            shootBtn.disabled = disable;
+            passBtn.disabled = disable;
+            stealBtn.disabled = disable;
         }
+
+        function displayMessages(messages, callback) {
+            if (messages.length === 0) {
+                if (callback) callback();
+                return;
+            }
+            const message = messages.shift();
+            messageBox.innerHTML += `<p>${message}</p>`;
+            if (message.includes("Press 'Steal'")) {
+                stealBtn.style.display = 'inline-block';
+                stealBtn.disabled = false;
+                return;
+            }
+            setTimeout(() => displayMessages(messages, callback), 1000);
+        }
+
+        function sendAction(action, steal = false) {
+            disableButtons();
+            fetch('/action', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: action, steal: steal})
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayMessages([...data.messages], () => {
+                    if (!data.game_over) disableButtons(false);
+                });
+                myScoreSpan.textContent = data.my_score;
+                opponentScoreSpan.textContent = data.opponent_score;
+                if (data.game_over) disableButtons();
+            });
+        }
+
+        shootBtn.addEventListener('click', () => sendAction('shoot'));
+        passBtn.addEventListener('click', () => sendAction('pass'));
+        stealBtn.addEventListener('click', () => {
+            stealBtn.style.display = 'none';
+            sendAction('shoot', true);
+        });
     </script>
 </body>
 </html>
