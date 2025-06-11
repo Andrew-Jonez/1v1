@@ -7,6 +7,12 @@ const passBtn = document.getElementById('passBtn');
 const stealBtn = document.getElementById('stealBtn');
 const overlay = document.getElementById('welcomeOverlay');
 const closeOverlayBtn = document.getElementById('closeOverlayBtn');
+const gameMusic = document.getElementById('gameMusic');
+
+function startGame() {
+    gameMusic.volume = 0.5;  // optional: set volume 0.0 to 1.0
+    gameMusic.play();
+}
 
 // Disable or enable all buttons (shoot, pass, steal)
 function disableButtons(disable = true) {
@@ -111,7 +117,14 @@ closeOverlayBtn.addEventListener('click', () => {
     overlay.style.display = 'none';
     disableButtons(false);
     setStealVisibility(false);
+
+    // Start in-game music
+    gameMusic.volume = 0.3;
+    gameMusic.play().catch((e) => {
+        console.log("Autoplay blocked by browser:", e);
+    });
 });
+
 
 // On page load, show overlay, disable steal button, enable shoot/pass buttons
 window.onload = () => {

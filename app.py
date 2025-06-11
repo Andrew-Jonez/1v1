@@ -30,7 +30,7 @@ def index():
 def action():
     data = request.get_json()
     action_type = data.get('action')
-    steal_attempt = request.json.get('steal', False)
+    steal_attempt = data.get('steal', False)
 
     my_score = session.get('my_score', 0)
     opponent_score = session.get('opponent_score', 0)
