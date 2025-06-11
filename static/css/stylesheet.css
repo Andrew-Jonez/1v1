@@ -58,13 +58,43 @@ body {
 }
 
 /* Message box styling */
+/* Message box styling */
 #messageBox {
-    min-height: 50px;
+    min-height: 70px;  /* a bit taller to fit up to 3 lines */
+    max-height: 90px;  /* limit height to ~3 lines */
     background: #444;
     padding: 10px;
     border-radius: 5px;
     margin-top: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    font-family: 'silkscreennormal', monospace;
+    font-size: 1.1em;
+    line-height: 1.3em;
 }
+
+/* Each message paragraph */
+#messageBox p {
+    margin: 0;
+    padding: 2px 0;
+    animation: fadeSlideIn 0.3s ease forwards;
+}
+
+/* Subtle fade and slide animation */
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
 /* Overlay background */
 .overlay {
     position: fixed;

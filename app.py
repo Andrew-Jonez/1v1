@@ -28,7 +28,8 @@ def index():
 
 @app.route('/action', methods=['POST'])
 def action():
-    action_type = request.json['action']
+    data = request.get_json()
+    action_type = data.get('action')
     steal_attempt = request.json.get('steal', False)
 
     my_score = session.get('my_score', 0)
@@ -36,6 +37,7 @@ def action():
     turn = session.get('turn', 'player_turn')
     messages = []
     prompt_steal = False
+    auto_continue = False
 
     if my_score >= MAX_SCORE or opponent_score >= MAX_SCORE:
         messages.append("Game is over.")
@@ -43,7 +45,8 @@ def action():
             'messages': messages,
             'my_score': my_score,
             'opponent_score': opponent_score,
-            'game_over': True
+            'game_over': True,
+            'auto_continue': False
         })
 
     if turn == 'awaiting_steal' and steal_attempt:
@@ -53,11 +56,13 @@ def action():
         else:
             messages.append("Steal failed.")
             session['turn'] = 'opponent_turn'
+            auto_continue = True
         return jsonify({
             'messages': messages,
             'my_score': my_score,
             'opponent_score': opponent_score,
-            'game_over': False
+            'game_over': False,
+            'auto_continue': auto_continue
         })
 
     if turn == 'player_turn':
@@ -72,6 +77,7 @@ def action():
                 messages.append(rebound_result)
                 if rebound_result == "Your Opponent rebounded the ball!":
                     session['turn'] = 'opponent_turn'
+                    auto_continue = True
                 else:
                     session['turn'] = 'player_turn'
 
@@ -80,33 +86,35 @@ def action():
             session['turn'] = 'player_turn'
 
     elif turn == 'opponent_turn':
-        offense_result = opponent_offense()
-        messages.append(offense_result)
+        # The "auto" action triggers automatic continuation of opponent offense
+        if action_type == 'auto' or action_type == None:
+            offense_result = opponent_offense()
+            messages.append(offense_result)
 
-        if offense_result == "Your opponent passed the ball!":
-            messages.append("Press 'Steal' to try to take the ball.")
-            session['turn'] = 'awaiting_steal'
-            prompt_steal = True
-            return jsonify({
-                'messages': messages,
-                'my_score': my_score,
-                'opponent_score': opponent_score,
-                'prompt_steal': prompt_steal,
-                'game_over': False
-            })
-        else:
-            if score2points():
-                opponent_score += 2
-                messages.append("Your opponent scored 2 points!")
-                session['turn'] = 'opponent_turn'
-            else:
-                messages.append("Your opponent missed.")
-                rebound_result = rebound()
-                messages.append(rebound_result)
-                if rebound_result == "Your Opponent rebounded the ball!":
+            if offense_result == "Your opponent passed the ball!":
+                messages.append("Press 'Steal' to try to take the ball.")
+                session['turn'] = 'awaiting_steal'
+                prompt_steal = True
+                auto_continue = False
+
+            elif offense_result == "Your Opponent shot the ball!":
+                if score2points():
+                    opponent_score += 2
+                    messages.append("Your opponent scored 2 points!")
                     session['turn'] = 'opponent_turn'
+                    auto_continue = True
                 else:
-                    session['turn'] = 'player_turn'
+                    messages.append("Your opponent missed.")
+                    rebound_result = rebound()
+                    messages.append(rebound_result)
+                    if rebound_result == "Your Opponent rebounded the ball!":
+                        session['turn'] = 'opponent_turn'
+                        auto_continue = True
+                    else:
+                        session['turn'] = 'player_turn'
+                        auto_continue = False
+        else:
+            auto_continue = True
 
     session['my_score'] = my_score
     session['opponent_score'] = opponent_score
@@ -120,7 +128,8 @@ def action():
         'messages': messages,
         'my_score': my_score,
         'opponent_score': opponent_score,
-        'game_over': my_score >= MAX_SCORE or opponent_score >= MAX_SCORE
+        'game_over': my_score >= MAX_SCORE or opponent_score >= MAX_SCORE,
+        'auto_continue': auto_continue
     })
 
 if __name__ == '__main__':

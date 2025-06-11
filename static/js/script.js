@@ -1,81 +1,121 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const overlay = document.getElementById('welcomeOverlay');
-    const closeOverlayBtn = document.getElementById('closeOverlayBtn');
+// Elements
+const myScoreSpan = document.getElementById('myScore');
+const opponentScoreSpan = document.getElementById('opponentScore');
+const messageBox = document.getElementById('messageBox');
+const shootBtn = document.getElementById('shootBtn');
+const passBtn = document.getElementById('passBtn');
+const stealBtn = document.getElementById('stealBtn');
+const overlay = document.getElementById('welcomeOverlay');
+const closeOverlayBtn = document.getElementById('closeOverlayBtn');
 
+// Disable or enable all buttons (shoot, pass, steal)
+function disableButtons(disable = true) {
+    shootBtn.disabled = disable;
+    passBtn.disabled = disable;
+    stealBtn.disabled = disable;
 
-    // Show overlay when the page loads
-    overlay.style.display = "flex";
+    if (disable) {
+        shootBtn.classList.add('disabled');
+        passBtn.classList.add('disabled');
+        stealBtn.classList.add('disabled');
+    } else {
+        shootBtn.classList.remove('disabled');
+        passBtn.classList.remove('disabled');
+        stealBtn.classList.remove('disabled');
+    }
+}
 
-    // Hide overlay when "Start Game" is clicked
-    closeOverlayBtn.addEventListener('click', function () {
-        console.log("Start Game button clicked!");
-        overlay.style.display = "none";
-        closeOverlayBtn.disabled = true;
-    });
+// Show or hide steal button
+function setStealVisibility(show) {
+    stealBtn.style.display = show ? 'inline-block' : 'none';
+}
 
-    const shootBtn = document.getElementById('shoot-btn');
-    const passBtn = document.getElementById('pass-btn');
-    const stealBtn = document.getElementById('steal-btn');
-    const messageDiv = document.getElementById('message');
-    const myScoreSpan = document.getElementById('my-score');
-    const opponentScoreSpan = document.getElementById('opponent-score');
-
-    function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+// Display messages in messageBox, show max 3 messages at a time, then call callback
+function displayMessages(messages, callback) {
+    if (messages.length === 0) {
+        if (callback) callback();
+        return;
     }
 
-    async function displayMessages(messages) {
-        messageDiv.innerHTML = "";
-        for (let msg of messages) {
-            const p = document.createElement('p');
-            p.textContent = msg;
-            messageDiv.appendChild(p);
-            await delay(1000);
-        }
+    const message = messages.shift();
+
+    const p = document.createElement('p');
+    p.textContent = message;
+    messageBox.appendChild(p);
+
+    // Only show the last 3 messages
+    while (messageBox.children.length > 3) {
+        messageBox.removeChild(messageBox.firstChild);
     }
 
-    function disableButtons() {
-        shootBtn.disabled = true;
-        passBtn.disabled = true;
-        stealBtn.disabled = true;
+    if (message.includes("Press 'Steal'")) {
+        stealBtn.style.display = 'inline-block';
+        stealBtn.disabled = false;
+        if (callback) callback();
+        return;
     }
 
-    function enableButtons() {
-        shootBtn.disabled = false;
-        passBtn.disabled = false;
-        stealBtn.disabled = true; // Still starts disabled
-    }
+    setTimeout(() => displayMessages(messages, callback), 1000);
+}
 
-    async function sendAction(action, steal = false) {
-        disableButtons();
-        const response = await fetch('/action', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action, steal })
+
+// Send action to server: action can be 'shoot', 'pass', 'auto', or null; steal is boolean
+function sendAction(action, steal = false) {
+    disableButtons(true);
+
+    fetch('/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action, steal: steal })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Steal button visibility depends on whether server prompts for steal
+        setStealVisibility(data.messages.some(msg => msg.toLowerCase().includes('steal')));
+
+        displayMessages([...data.messages], () => {
+            if (!data.game_over) {
+                if (data.auto_continue) {
+                    // Automatically continue opponent turn after 1 second
+                    setTimeout(() => sendAction('auto'), 1000);
+                } else {
+                    // Enable buttons for player's turn
+                    disableButtons(false);
+                }
+            } else {
+                disableButtons(true);
+                setStealVisibility(false);
+            }
         });
-
-        const data = await response.json();
-        await displayMessages(data.messages);
 
         myScoreSpan.textContent = data.my_score;
         opponentScoreSpan.textContent = data.opponent_score;
-
-        if (data.messages.some(msg => msg.includes("press Steal"))) {
-            stealBtn.disabled = false;
-            stealBtn.style.display = 'inline-block'; // Optional if hidden
-        } else if (!data.game_over) {
-            enableButtons();
-        }
-
-        if (data.game_over) {
-            disableButtons();
-        }
-    }
-
-    shootBtn.addEventListener('click', () => sendAction('shoot'));
-    passBtn.addEventListener('click', () => sendAction('pass'));
-    stealBtn.addEventListener('click', () => {
-        stealBtn.style.display = 'none';
-        sendAction('steal_attempt');
+    })
+    .catch(err => {
+        console.error('Error sending action:', err);
+        disableButtons(false);
     });
+}
+
+// Button click event handlers
+shootBtn.addEventListener('click', () => sendAction('shoot'));
+passBtn.addEventListener('click', () => sendAction('pass'));
+stealBtn.addEventListener('click', () => {
+    stealBtn.style.display = 'none';
+    sendAction(null, true);
 });
+
+
+// Overlay start game button handler
+closeOverlayBtn.addEventListener('click', () => {
+    overlay.style.display = 'none';
+    disableButtons(false);
+    setStealVisibility(false);
+});
+
+// On page load, show overlay, disable steal button, enable shoot/pass buttons
+window.onload = () => {
+    overlay.style.display = 'flex';
+    disableButtons(false);
+    setStealVisibility(false);
+};

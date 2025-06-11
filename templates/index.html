@@ -66,82 +66,8 @@
     </div>
 
     <!-- Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Overlay logic
-            const overlay = document.getElementById('welcomeOverlay');
-            const closeOverlayBtn = document.getElementById('closeOverlayBtn');
-
-            overlay.style.display = 'flex';
-            closeOverlayBtn.addEventListener('click', function () {
-                overlay.style.display = 'none';
-            });
-
-            // Game logic
-            const shootBtn = document.getElementById('shootBtn');
-            const passBtn = document.getElementById('passBtn');
-            const stealBtn = document.getElementById('stealBtn');
-            const messageBox = document.getElementById('messageBox');
-            const myScoreSpan = document.getElementById('myScore');
-            const opponentScoreSpan = document.getElementById('opponentScore');
-
-            function disableButtons(disable = true) {
-                shootBtn.disabled = disable;
-                passBtn.disabled = disable;
-                stealBtn.disabled = disable;
-            }
-
-            function displayMessages(messages, callback) {
-                if (messages.length === 0) {
-                    if (callback) callback();
-                    return;
-                }
-
-                const message = messages.shift();
-
-                const p = document.createElement('p');
-                p.textContent = message;
-                messageBox.appendChild(p);
-
-                // Only show the last 3 messages
-                while (messageBox.children.length > 3) {
-                    messageBox.removeChild(messageBox.firstChild);
-                }
-
-                if (message.includes("Press 'Steal'")) {
-                    stealBtn.style.display = 'inline-block';
-                    stealBtn.disabled = false;
-                    return;
-                }
-
-                setTimeout(() => displayMessages(messages, callback), 1000);
-            }
-
-            function sendAction(action, steal = false) {
-                disableButtons();
-                fetch('/action', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: action, steal: steal })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    displayMessages([...data.messages], () => {
-                        if (!data.game_over) disableButtons(false);
-                    });
-                    myScoreSpan.textContent = data.my_score;
-                    opponentScoreSpan.textContent = data.opponent_score;
-                    if (data.game_over) disableButtons();
-                });
-            }
-
-            shootBtn.addEventListener('click', () => sendAction('shoot'));
-            passBtn.addEventListener('click', () => sendAction('pass'));
-            stealBtn.addEventListener('click', () => {
-                stealBtn.style.display = 'none';
-                sendAction('shoot', true);
-            });
-        });
-    </script>
+    
 </body>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
 </html>
