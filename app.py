@@ -1,8 +1,10 @@
 from flask import Flask, render_template, request, session, jsonify
 import random
+import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key'
+app.secret_key = os.getenv('SECRET_KEY')
 
 MAX_SCORE = 21
 
