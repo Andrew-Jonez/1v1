@@ -3,7 +3,7 @@ const myScoreSpan = document.getElementById('myScore');
 const opponentScoreSpan = document.getElementById('opponentScore');
 const messageBox = document.getElementById('messageBox');
 const shootBtn = document.getElementById('shootBtn');
-const passBtn = document.getElementById('passBtn');
+const dribbleBtn = document.getElementById('dribbleBtn');
 const stealBtn = document.getElementById('stealBtn');
 const overlay = document.getElementById('welcomeOverlay');
 const closeOverlayBtn = document.getElementById('closeOverlayBtn');
@@ -17,16 +17,16 @@ function startGame() {
 // Disable or enable all buttons (shoot, pass, steal)
 function disableButtons(disable = true) {
     shootBtn.disabled = disable;
-    passBtn.disabled = disable;
+    dribbleBtn.disabled = disable;
     stealBtn.disabled = disable;
 
     if (disable) {
         shootBtn.classList.add('disabled');
-        passBtn.classList.add('disabled');
+        dribbleBtn.classList.add('disabled');
         stealBtn.classList.add('disabled');
     } else {
         shootBtn.classList.remove('disabled');
-        passBtn.classList.remove('disabled');
+        dribbleBtn.classList.remove('disabled');
         stealBtn.classList.remove('disabled');
     }
 }
@@ -105,7 +105,7 @@ function sendAction(action, steal = false) {
 
 // Button click event handlers
 shootBtn.addEventListener('click', () => sendAction('shoot'));
-passBtn.addEventListener('click', () => sendAction('pass'));
+dribbleBtn.addEventListener('click', () => sendAction('dribble'));
 stealBtn.addEventListener('click', () => {
     stealBtn.style.display = 'none';
     sendAction(null, true);

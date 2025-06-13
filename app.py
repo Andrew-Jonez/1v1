@@ -15,7 +15,7 @@ def rebound():
     return random.choice(["You got the ball back!", "Your Opponent rebounded the ball!"])
 
 def opponent_offense():
-    return random.choice(["Your opponent passed the ball!", "Your Opponent shot the ball!"])
+    return random.choice(["Your opponent dribbled the ball!", "Your Opponent shot the ball!"])
 
 def steal_ball():
     steal_chance = 8
@@ -83,8 +83,8 @@ def action():
                 else:
                     session['turn'] = 'player_turn'
 
-        elif action_type == 'pass':
-            messages.append("You passed the ball.")
+        elif action_type == 'dribble':
+            messages.append("You dribbled the ball.")
             session['turn'] = 'player_turn'
 
     elif turn == 'opponent_turn':
@@ -93,7 +93,7 @@ def action():
             offense_result = opponent_offense()
             messages.append(offense_result)
 
-            if offense_result == "Your opponent passed the ball!":
+            if offense_result == "Your opponent dribbled the ball!":
                 messages.append("Press 'Steal' to try to take the ball.")
                 session['turn'] = 'awaiting_steal'
                 prompt_steal = True
