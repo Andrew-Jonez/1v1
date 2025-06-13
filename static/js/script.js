@@ -8,6 +8,7 @@ const stealBtn = document.getElementById('stealBtn');
 const overlay = document.getElementById('welcomeOverlay');
 const closeOverlayBtn = document.getElementById('closeOverlayBtn');
 const gameMusic = document.getElementById('gameMusic');
+const swishSound = document.getElementById("swish-sound");
 
 function startGame() {
     gameMusic.volume = 0.5;  // optional: set volume 0.0 to 1.0
@@ -65,7 +66,7 @@ function displayMessages(messages, callback) {
 }
 
 
-// Send action to server: action can be 'shoot', 'pass', 'auto', or null; steal is boolean
+// Send action to server: action can be 'shoot', 'dribble', 'auto', or null; steal is boolean
 function sendAction(action, steal = false) {
     disableButtons(true);
 
@@ -78,6 +79,13 @@ function sendAction(action, steal = false) {
     .then(data => {
         // Steal button visibility depends on whether server prompts for steal
         setStealVisibility(data.messages.some(msg => msg.toLowerCase().includes('steal')));
+
+            // Play swish sound if 2 points were scored
+    if (data.messages.some(msg => msg.toLowerCase().includes("scored 2 points"))) {
+        swishSound.currentTime = 0;
+        swishSound.play().catch(err => console.warn("Playback blocked:", err));
+    }
+
 
         displayMessages([...data.messages], () => {
             if (!data.game_over) {
