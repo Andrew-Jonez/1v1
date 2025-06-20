@@ -134,3 +134,15 @@ body {
 #closeOverlayBtn:hover {
     background-color: #70f0e6;
 }
+#playerName {
+    display: block;
+    margin: 0 auto;               
+    text-align: center;   
+    font-family: 'silkscreennormal', monospace;
+    font-size: 1em;
+    background: transparent;  
+    border: none;             
+    color: #fff;             
+    outline: none;
+              
+}

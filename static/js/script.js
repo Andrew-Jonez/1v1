@@ -10,11 +10,6 @@ const closeOverlayBtn = document.getElementById('closeOverlayBtn');
 const gameMusic = document.getElementById('gameMusic');
 const swishSound = document.getElementById("swish-sound");
 
-function startGame() {
-    gameMusic.volume = 0.5;  // optional: set volume 0.0 to 1.0
-    gameMusic.play();
-}
-
 // Disable or enable all buttons (shoot, pass, steal)
 function disableButtons(disable = true) {
     shootBtn.disabled = disable;
@@ -65,7 +60,6 @@ function displayMessages(messages, callback) {
     setTimeout(() => displayMessages(messages, callback), 1000);
 }
 
-
 // Send action to server: action can be 'shoot', 'dribble', 'auto', or null; steal is boolean
 function sendAction(action, steal = false) {
     disableButtons(true);
@@ -77,28 +71,43 @@ function sendAction(action, steal = false) {
     })
     .then(response => response.json())
     .then(data => {
-        // Steal button visibility depends on whether server prompts for steal
+        // Steal button visibility
         setStealVisibility(data.messages.some(msg => msg.toLowerCase().includes('steal')));
 
-            // Play swish sound if 2 points were scored
-    if (data.messages.some(msg => msg.toLowerCase().includes("scored 2 points"))) {
-        swishSound.currentTime = 0;
-        swishSound.play().catch(err => console.warn("Playback blocked:", err));
-    }
-
+        // Play swish if points were scored
+        if (data.messages.some(msg => msg.toLowerCase().includes("scored 2 points"))) {
+            swishSound.currentTime = 0;
+            swishSound.play().catch(err => console.warn("Playback blocked:", err));
+        }
 
         displayMessages([...data.messages], () => {
             if (!data.game_over) {
                 if (data.auto_continue) {
-                    // Automatically continue opponent turn after 1 second
                     setTimeout(() => sendAction('auto'), 1000);
                 } else {
-                    // Enable buttons for player's turn
                     disableButtons(false);
                 }
             } else {
                 disableButtons(true);
                 setStealVisibility(false);
+
+                if (data.messages.some(m => m.toLowerCase().includes('you won'))) {
+                    fetch('/leaderboard')
+                        .then(res => res.json())
+                        .then(scores => {
+                            const board = document.getElementById('leaderboardList');
+                            board.innerHTML = '';
+
+                            scores.forEach((entry, index) => {
+                                const li = document.createElement('li');
+                                li.textContent = `${index + 1}. ${entry.name} - ${entry.time}s`;
+                                board.appendChild(li);
+                            });
+
+                            document.getElementById('leaderboardOverlay').style.display = 'flex';
+                        })
+                        .catch(err => console.error('Failed to load leaderboard', err));
+                }
             }
         });
 
@@ -119,22 +128,40 @@ stealBtn.addEventListener('click', () => {
     sendAction(null, true);
 });
 
-
 // Overlay start game button handler
 closeOverlayBtn.addEventListener('click', () => {
-    overlay.style.display = 'none';
-    disableButtons(false);
-    setStealVisibility(false);
+    const playerNameInput = document.getElementById('playerName');
+    const playerName = playerNameInput.value.trim();
 
-    // Start in-game music
-    gameMusic.volume = 0.3;
-    gameMusic.play().catch((e) => {
-        console.log("Autoplay blocked by browser:", e);
+    const nameRegex = /^[a-zA-Z0-9 _-]{1,20}$/;
+    if (!nameRegex.test(playerName)) {
+        alert("Invalid name. Only letters, numbers, space, dash and underscore (max 20 chars).");
+        return;
+    }
+
+    fetch('/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: playerName })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            overlay.style.display = 'none';
+            disableButtons(false);
+            setStealVisibility(false);
+            gameMusic.volume = 0.3;
+            gameMusic.play().catch(e => console.log("Autoplay blocked:", e));
+        } else {
+            alert(data.error || "Unexpected error");
+        }
+    })
+    .catch(err => {
+        console.error("Error sending player name:", err);
     });
 });
 
-
-// On page load, show overlay, disable steal button, enable shoot/pass buttons
+// On page load
 window.onload = () => {
     overlay.style.display = 'flex';
     disableButtons(false);
