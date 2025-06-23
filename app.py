@@ -73,21 +73,25 @@ def action():
     messages = []
     auto_continue = False
 
-    if turn == 'awaiting_steal' and steal_attempt:
-        if steal_ball():
-            messages.append("You stole the ball!")
-            session['turn'] = 'player_turn'
+    if turn == 'awaiting_steal':
+        if steal_attempt:
+            if steal_ball():
+                messages.append("You stole the ball!")
+                session['turn'] = 'player_turn'
+            else:
+                messages.append("Steal failed.")
+                session['turn'] = 'opponent_turn'
+                auto_continue = True
         else:
-            messages.append("Steal failed.")
-            session['turn'] = 'opponent_turn'
-            auto_continue = True
+            messages.append("You must attempt a steal!")
         return jsonify({
             'messages': messages,
             'my_score': my_score,
             'opponent_score': opponent_score,
             'game_over': False,
             'auto_continue': auto_continue
-        })
+    })
+
 
     if turn == 'player_turn':
         if action_type == 'shoot':
