@@ -1,0 +1,148 @@
+@font-face {
+    font-family: 'silkscreennormal';
+    src: url('/static/css/fonts/slkscre-webfont.woff') format('woff'),
+         url('/static/css/fonts/slkscre-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+
+
+/* Set up the entire page */
+body {
+    font-family: 'silkscreennormal', sans-serif;
+    background: url('/static/images/background.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #fff;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+
+/* Style the main game container */
+.game-container {
+    width: 80%;
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+    background-color: #898686;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Style the scoreboard */
+.scoreboard {
+    display: flex;
+    justify-content: space-around;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+}
+
+/* Style buttons */
+.action-button {
+    font-family: 'silkscreennormal', sans-serif;
+    background-color: #912cd5;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1.2em;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+.action-button:hover {
+    background-color: #70f0e6;
+}
+
+/* Message box styling */
+/* Message box styling */
+#messageBox {
+    min-height: 70px;  /* a bit taller to fit up to 3 lines */
+    max-height: 90px;  /* limit height to ~3 lines */
+    background: #444;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    font-family: 'silkscreennormal', monospace;
+    font-size: 1.1em;
+    line-height: 1.3em;
+}
+
+/* Each message paragraph */
+#messageBox p {
+    margin: 0;
+    padding: 2px 0;
+    animation: fadeSlideIn 0.3s ease forwards;
+}
+
+/* Subtle fade and slide animation */
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Overlay background */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+}
+
+/* Content inside the overlay */
+.overlay-content {
+    background: #333;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+}
+
+/* Close button */
+#closeOverlayBtn {
+    font-family: 'silkscreennormal', sans-serif;
+    background-color: #000000;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+#closeOverlayBtn:hover {
+    background-color: #70f0e6;
+}
+#playerName {
+    display: block;
+    margin: 0 auto;               
+    text-align: center;   
+    font-family: 'silkscreennormal', monospace;
+    font-size: 1em;
+    background: transparent;  
+    border: none;             
+    color: #fff;             
+    outline: none;
+              
+}

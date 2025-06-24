@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Basketball 21</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesheet.css') }}">
+    <style>
+        /* Optional override here if you can't edit stylesheet.css */
+        #messageBox {
+            max-height: 4.5em; /* Approx 3 lines of text */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            transition: all 0.3s ease;
+        }
+
+        #messageBox p {
+            margin: 0;
+            padding: 2px 0;
+            animation: fadeSlideIn 0.3s ease;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+  <!-- Overlay -->
+<!-- Overlay -->
+<div id="welcomeOverlay" class="overlay">
+    <div class="overlay-content">
+        <h2>Welcome to 1v1</h2> 
+        <p>A Basketball Game of 21!</p>
+
+        <label for="playerName">Enter your name:</label>
+        <input type="text" id="playerName" maxlength="20" placeholder="Player name" />
+
+        <p>Game Rules:</p>
+        <ul>
+            <li>Click <strong>Shoot</strong> to attempt a basket.</li>
+            <li>Click <strong>Dribble</strong> to keep possession.</li>
+            <li>Use <strong>Steal</strong> strategically when prompted.</li>
+            <li>First to <strong>21 points</strong> wins!</li>
+        </ul>
+        <button id="closeOverlayBtn">Start Game</button>
+    </div>
+</div>
+
+<!-- Leaderboard Overlay -->
+<div id="leaderboardOverlay" class="overlay" style="display: none;">
+    <div class="overlay-content">
+        <h2>🏆 Leaderboard - Fastest Wins</h2>
+        <ul id="leaderboardList"></ul>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+</div>
+
+    <!-- Main Game UI -->
+    <div class="game-container">
+        <h1>1v1</h1>
+        <div class="scoreboard">
+            <p>Home: <span id="myScore">0</span></p>
+            <p>Away: <span id="opponentScore">0</span></p>
+        </div>
+        <div class="message-box" id="messageBox"></div>
+        <div class="buttons">
+            <button class="action-button" id="shootBtn">Shoot</button>
+            <button class="action-button" id="dribbleBtn">Dribble</button>
+            <button class="action-button" id="stealBtn" style="display: none;">Steal</button>
+        </div>
+    </div>
+
+    <!-- Script -->
+    
+</body>
+<audio id="gameMusic" src="{{ url_for('static', filename='audio/8bit0613.mp3') }}" loop></audio>
+<audio id="swish-sound" src="{{ url_for('static', filename='audio/swish.mp3') }}"></audio>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+
+</html>
