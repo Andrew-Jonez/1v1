@@ -2,12 +2,13 @@ import re
 from flask import Flask, render_template, request, session, jsonify
 import random
 import os
-from dotenv import load_dotenv
-import sqlite3
+#from dotenv import load_dotenv
+#import sqlite3
 import time
+import pyodbc
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY')
+app.secret_key = os.environ.get('SECRET_KEY', 'fallback-dev-key')
 
 MAX_SCORE = 21
 
@@ -25,22 +26,48 @@ def steal_ball():
     return random.randint(0, 10) > steal_chance
 
 def init_db():
-    with sqlite3.connect('leaderboard.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS leaderboard (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                player_name TEXT NOT NULL,
-                time_seconds REAL NOT NULL
-            )
-        ''')
-        conn.commit()
+    try:
+        with get_sql_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                IF NOT EXISTS (
+                    SELECT * FROM sysobjects WHERE name='leaderboard' AND xtype='U'
+                )
+                CREATE TABLE leaderboard (
+                    id INT IDENTITY(1,1) PRIMARY KEY,
+                    player_name NVARCHAR(50) NOT NULL,
+                    time_seconds FLOAT NOT NULL
+                )
+            """)
+            conn.commit()
+    except Exception as e:
+        print("Error initializing database:", e)
+
+def get_sql_connection():
+    return pyodbc.connect(
+        f"Driver={{ODBC Driver 18 for SQL Server}};"
+        f"Server={os.environ['SQL_SERVER_NAME']}.database.windows.net;"
+        f"Database=1v1-db;"
+        f"Uid=sqladminuser;"
+        f"Pwd={os.environ['SQL_ADMIN_PASSWORD']};"
+        f"Encrypt=yes;"
+        f"TrustServerCertificate=no;"
+        f"Connection Timeout=30;"
+    )
+
 
 def save_score(name, seconds):
-    with sqlite3.connect('leaderboard.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO leaderboard (player_name, time_seconds) VALUES (?, ?)", (name, seconds))
-        conn.commit()
+    try:
+        with get_sql_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO leaderboard (player_name, time_seconds) VALUES (?, ?)",
+                (name, seconds)
+            )
+            conn.commit()
+    except Exception as e:
+        print("Error saving score:", e)
+
 
 @app.route('/start', methods=['POST'])
 def start():
@@ -90,7 +117,7 @@ def action():
             'opponent_score': opponent_score,
             'game_over': False,
             'auto_continue': auto_continue
-    })
+        })
 
 
     if turn == 'player_turn':
@@ -163,15 +190,24 @@ def action():
 
 @app.route('/leaderboard')
 def leaderboard():
-    with sqlite3.connect('leaderboard.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT player_name, time_seconds FROM leaderboard ORDER BY time_seconds ASC LIMIT 10")
-        top_scores = cursor.fetchall()
+    try:
+        with get_sql_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT TOP 10 player_name, time_seconds
+                FROM leaderboard
+                ORDER BY time_seconds ASC
+            """)
+            top_scores = cursor.fetchall()
 
-    return jsonify([
-        {'name': name, 'time': round(time, 2)}
-        for name, time in top_scores
-    ])
+        return jsonify([
+            {'name': row[0], 'time': round(row[1], 2)}
+            for row in top_scores
+        ])
+    except Exception as e:
+        print("Error fetching leaderboard:", e)
+        return jsonify([]), 500
+
 
 if __name__ == '__main__':
     init_db()
